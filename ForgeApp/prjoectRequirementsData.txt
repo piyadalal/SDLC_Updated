@@ -1,0 +1,74 @@
+Title: Simple Trivia Quiz Game for TV Platform
+
+Overview:
+Create a single-player trivia game application for Smart TVs that allows users to answer multiple-choice questions using the remote control. The app should be easy to navigate, visually clean, and suitable for casual play.
+
+🎯 Goals:
+Provide a fun, lightweight quiz experience on TV
+
+Support navigation via TV remote
+
+Display score at the end
+
+Allow quiz type selection (e.g., General, Movies, Sports)
+
+🧩 Features / Requirements:
+Home Screen
+
+Show title and "Start Quiz" button
+
+Allow the user to select a quiz category (e.g., General, Movies, Sports)
+
+Categories navigable using the remote (left/right or up/down)
+
+Once selected, navigate to quiz screen and fetch questions via API based on selected category
+
+Quiz Screen
+
+Display one question at a time
+
+Each question has 4 multiple-choice answers
+
+User navigates options with remote (up/down/OK)
+
+Highlight selected option
+
+Provide feedback after selection (e.g., correct/wrong)
+
+Auto-move to next question after a short delay
+
+Score Screen
+
+Show total score out of number of questions
+
+Option to play again and choose a different category
+
+Question Data
+
+Served from a backend API endpoint
+
+API should support category-based question retrieval
+
+Each category must support at least 10 questions
+
+Design
+
+Clean, readable layout
+
+Use large fonts and contrasting colors
+
+Responsive to different TV resolutions
+
+Remote Compatibility
+
+Must work with directional keys and OK/select button
+
+No need for text input
+
+🔧 Non-Functional Requirements
+App should load in under 3 seconds
+
+Must handle slow or failed API calls gracefully (e.g., fallback message or retry)
+
+Should work on all target TV platforms (e.g., Sky Glass, RDK, Android TV)
+

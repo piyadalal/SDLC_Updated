@@ -1,0 +1,14 @@
+modules:
+  confluence:contentMacro:
+    - key: ai-story-gen-macro
+      function: main
+      title: AI Story Generator
+      description: Generate stories + AC from requirement
+permissions:
+  scopes:
+    - write:confluence-content
+    - read:confluence-content
+  external:
+    fetch:
+      backend:
+        - https://2946-ai-project-management.openai.azure.com/
