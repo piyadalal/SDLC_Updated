@@ -1,9 +1,11 @@
 import os
+import sys
 from dotenv import load_dotenv
 from openai import AzureOpenAI
 import pandas as pd
-from excel_formatter import auto_format_excel
-
+# Add the parent directory to sys.path
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+from scripts.excel_formatter import auto_format_excel
 
 load_dotenv()  # 👈 Loads vars from .env file
 
@@ -18,13 +20,14 @@ client = AzureOpenAI(
     api_version=api_version
 )
 
-# Read your requirement from file
-with open("prjoectRequirementsData.txt", "r") as file:
+base_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+
+with open(os.path.join(base_dir, "data", "prjoectRequirementsData.txt"), "r") as file:
     requirement = file.read()
 
-# Read structured prompt template
-with open("story_prompt.txt", "r") as file:
+with open(os.path.join(base_dir, "prompts", "story_prompt.txt"), "r") as file:
     prompt_template = file.read()
+
 
 # Format prompt with the actual requirement
 prompt = prompt_template.replace("{requirement}", requirement)
