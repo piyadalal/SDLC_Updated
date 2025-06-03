@@ -1,0 +1,35 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+*.log
+
+# Environment variables
+.env
+
+# Node/JavaScript
+node_modules/
+*.log
+
+# VS Code
+.vscode/
+
+# MacOS metadata
+.DS_Store
+
+# Excel output
+ai_user_stories_output.xlsx
+
+# Ignore any temporary or backup files
+*~
+*.swp
+*.tmp
+
+# Byte-compiled / cache files
+*.pyo
+*.pyd
+*.pyc
+
+# Ignore Excel formatter or generation results (optional if regenerated each run)
+*.xlsx
