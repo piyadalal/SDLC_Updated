@@ -1,10 +1,26 @@
-1. Given a STB has booted with HYDE enabled and is connected to the internet, when the user tunes to an IP service that the user is not entitled and should be part of the DSU upgrade journey, then the relevant DSU banner should be shown (with the red upgrade button).
-2. Given a STB has booted with HYDE enabled, when the user tunes midway through an appropriate event on an IP service that supports restart, then a Restart Banner will be shown shortly after tuning.
+ Acceptance Criteria
+Login screen should be displayed when the app opens, if the user is not already authenticated.
 
-Notes:
+The login screen should have fields for username and password.
 
-Not all services can support restart.
-Not all events (on a service that can support restart) support restart.
-There is additional conditional business rules that relate to exactly when the Restart option is offered.
-For instance, it is believed that restart is not shown if the user tunes to the event close the start of the event.
-As a pre-requisite to tuning to an IP service, the user needs a functioning network connection.
+The “Login” button should remain disabled until both fields are filled.
+
+If valid credentials are entered, the user should be logged in and redirected to the dashboard.
+
+If invalid credentials are entered, an appropriate error message should be displayed.
+
+Password input must be masked (i.e., characters are hidden).
+
+There should be a “Show/Hide password” toggle next to the password field.
+
+There should be a “Forgot Password” link, which opens the password recovery flow.
+
+The login page should have basic input validation, e.g.:
+
+Username must be an email
+
+Password cannot be empty
+
+Authentication requests should be secure (e.g., over HTTPS with proper error handling).
+
+The app should remember logged-in users, and not ask for credentials again unless they log out or session expires.
