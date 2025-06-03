@@ -22,26 +22,20 @@ client = AzureOpenAI(
 with open("prjoectRequirementsData.txt", "r") as file:
     requirement = file.read()
 
+# Read structured prompt template
+with open("story_prompt.txt", "r") as file:
+    prompt_template = file.read()
+
+# Format prompt with the actual requirement
+prompt = prompt_template.replace("{requirement}", requirement)
  
 
 # Prompt the model
 response = client.chat.completions.create(
     model=deployment,
     messages=[
-        { "role": "system", "content": "You are a senior agile product owner." },
-        { "role": "user", "content": f"""
-Given the following requirement, generate:
-- One Epic title
-- 3–5 user stories in "As a ___, I want ___ so that ___" format
-- Acceptance criteria for each
-- Notes (e.g., device support, edge cases)
-
-Output in markdown table format:
-| Epic | User Story | Acceptance Criteria | Notes |
-
-Requirement:
-{requirement}
-"""}
+        { "role": "system", "content": "You are a helpful assistant that generates Jira-ready agile story breakdowns." },
+        { "role": "user", "content": prompt }
     ],
     temperature=0.6,
     max_tokens=2048
@@ -56,6 +50,12 @@ print("=== GPT Message Content ===")
 print(content)
 # Save as Excel
 df = pd.DataFrame(parsed[1:], columns=[col.strip() for col in parsed[0]])
+df = df.applymap(lambda cell: (
+    cell.replace("<br>", "\n")        # real line breaks in Excel
+        .replace("*", "")
+        .replace("**", "")
+        .strip()
+) if isinstance(cell, str) else cell)
 
 # Write Excel file
 excel_path = "ai_user_stories_output.xlsx"
