@@ -33,3 +33,6 @@ ai_user_stories_output.xlsx
 
 # Ignore Excel formatter or generation results (optional if regenerated each run)
 *.xlsx
+
+# Script-specific Python virtual environment
+scripts/venv/

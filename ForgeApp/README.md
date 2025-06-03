@@ -1,6 +1,8 @@
 # Forge App - AI PM
 
-## Prerequisites
+## Run Python script locally
+
+### Prerequisites
 
 cd into ForgeApp folder
 
@@ -14,9 +16,9 @@ AZURE_OPENAI_API_KEY=use_your_api_key
 AZURE_OPENAI_EMBEDDING_DEPLOYMENT=text-embedding-3-large
 ```
 
-## Installation
+### Installation:
 
-Clone repo and run following commands
+cd into ForgeApp/scripts folder and run following commands
 
 ```bash
 python3 -m venv venv
