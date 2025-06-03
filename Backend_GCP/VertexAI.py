@@ -20,7 +20,7 @@ def main():
     """
 
     # 🧠 Ask Gemini to generate user stories
-    prompt = f"Convert the following requirement into detailed Agile user stories:\n\n{requirement}"
+    prompt = f"Convert the following requirement into detailed Agile user stories as :\n\n{requirement}"
     response = chat.send_message(prompt)
 
     # 📄 Print the result
