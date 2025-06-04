@@ -1,14 +1,23 @@
+app:
+  id: ari:cloud:ecosystem::app/c4d633be-fe9b-4bbf-a73e-251737c73b25
+  runtime:
+    name: nodejs18.x
+
 modules:
-  confluence:contentMacro:
-    - key: ai-story-gen-macro
-      function: main
-      title: AI Story Generator
-      description: Generate stories + AC from requirement
+  macro:
+    - key: story-gen-macro
+      function: story-gen-app
+      title: ai-story-gen
+      description: A simple UI Kit app to generate epics and user stories
+      categories:
+        - productivity
+
+  function:
+    - key: story-gen-app
+      handler: index.run
+
 permissions:
   scopes:
+    - read:confluence-content.summary
     - write:confluence-content
-    - read:confluence-content
-  external:
-    fetch:
-      backend:
-        - https://2946-ai-project-management.openai.azure.com/
+    - read:confluence-space.summary
