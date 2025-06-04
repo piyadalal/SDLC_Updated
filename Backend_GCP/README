@@ -15,3 +15,14 @@ Send prompts and get responses — no deployment step needed on your end.
 When would you deploy a model yourself?
 If you trained a custom model (e.g., your own TensorFlow or PyTorch model).
 Or if you want to deploy a custom container for inference.
+
+
+
+Avoiding pulling conflicting files remote to local :
+ add to gitignore
+ vi .idea/.gitignore
+__pycache__/
+*.pyc
+
+remove tracked file : git rm --cached ForgeApp/__pycache__/excel_formatter.cpython-313.pyc
+git commit -m "Remove __pycache__ from repo"
