@@ -1,14 +1,9 @@
 import streamlit as st
-import weaviate
 from dotenv import load_dotenv
-from llama_index.readers.file import PDFReader
-from llama_index.vector_stores.weaviate import WeaviateVectorStore
-from llama_index.core import StorageContext, VectorStoreIndex
 from llama_index.llms.azure_openai import AzureOpenAI
 from llama_index.embeddings.azure_openai import AzureOpenAIEmbedding
 from llama_index.core import Settings
 import os
-from pathlib import Path
 
 # Load environment variables
 load_dotenv()
