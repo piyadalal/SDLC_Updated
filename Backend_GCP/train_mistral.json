@@ -1,0 +1,1 @@
+{"instruction": "Generate a test case from this STB requirement.", "input": "When the user presses the Menu button, the STB should display the channel guide.", "output": "Test Steps:\n1. Power on the STB.\n2. Press the Menu button on the remote.\n3. Verify the channel guide appears.\n4. Confirm the listings are visible."}
