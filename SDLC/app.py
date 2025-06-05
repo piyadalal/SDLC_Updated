@@ -4,9 +4,11 @@ from llama_index.llms.azure_openai import AzureOpenAI
 from llama_index.embeddings.azure_openai import AzureOpenAIEmbedding
 from llama_index.core import Settings
 import os
+import pdfplumber
 from vertexai.preview.generative_models import GenerativeModel
 import vertexai
 from fpdf import FPDF
+import re
 import fitz  # PyMuPDF
 
 # Load environment variables
@@ -416,20 +418,122 @@ Test Case: [Clear and descriptive title]
 
 elif section == "Defect Handling":
     st.header("4️⃣ Defect Handling")
-    if st.button("🐞 Generate JIRA Defect Template", key="gen_jira_defect"):
-        st.success("✅ JIRA Defect Template:")
-        st.text("Summary: Login fails for valid users\nComponent: Backend\nPriority: High\nTags: login, backend, critical")
 
 elif section == "Root Cause Analysis":
-    st.header("5️⃣ Root Cause Analysis")
-    log_file = st.file_uploader("Upload log file for defect analysis:", type="txt")
-    logs = ""
-    if log_file:
-        logs = log_file.read().decode("utf-8")
-        st.success("Logs uploaded!")
-        st.text_area("📜 Log Snippet", logs, height=150)
-    if st.button("🔍 Run Root Cause Analysis", key="run_root_cause"):
-        st.success("✅ Root Cause:")
+    st.header("4️⃣ Root Cause Analysis")
+    with st.container():
+        st.markdown("**Paste your log file error or upload a file:**")
+        # Text area for manual input (independent from file upload)
+        user_input_text = st.text_area(
+            label="",
+            placeholder="Type or paste log file error here...",
+            height=200,
+            key="log_file_error_input"
+        )
+        # File uploader input (stored separately)
+        us_file = st.file_uploader(
+            "Or upload a file (TXT or PDF)",
+            type=["txt", "pdf"],
+            label_visibility="collapsed"
+        )
+        uploaded_text = ""
+        if us_file:
+            file_ext = us_file.name.split(".")[-1].lower()
+            if file_ext == "pdf":
+                import fitz  # PyMuPDF
+
+                doc = fitz.open(stream=us_file.read(), filetype="pdf")
+                for page in doc:
+                    uploaded_text += page.get_text()
+            elif file_ext == "txt":
+                uploaded_text = us_file.read().decode("utf-8")
+            else:
+                st.error("Unsupported file type.")
+        st.text_area(
+            "📄 Preview of uploaded file content (read-only):",
+            value=uploaded_text,
+            height=200,
+            disabled=True
+        )
+        # Final text source logic: Prefer manual input if not empty
+        final_user_stories = user_input_text.strip() or uploaded_text.strip()
+
+        if st.button("🧠Analyze STB Log File"):
+            with st.spinner("Analyzing STB logs for issues..."):
+                # Dynamically pick the final source
+                user_stories_source = user_input_text.strip() or uploaded_text.strip()
+                if not user_stories_source:
+                    st.warning("Please provide log file error lines via text area or file upload.")
+                else:
+                    full_text = ""
+                    with pdfplumber.open(us_file) as pdf:
+                        for page in pdf.pages:
+                            text = page.extract_text()
+                            if text:
+                                full_text += text + "\n"
+                        regex = re.compile("ERROR", re.IGNORECASE)
+
+                        file_ext = us_file.name.split(".")[-1].lower()
+                        if file_ext == "pdf":
+                            print("Detected PDF log file. Extracting text...")
+                            lines = full_text.splitlines()
+                        else:
+                            print("Detected plain text log file. Reading directly...")
+                            with open(user_stories_source, "r", encoding="utf-8", errors="ignore") as f:
+                                lines = f.readlines()
+
+                            # Filter and clean lines that match the pattern
+                            filtered_lines = [line.strip() for line in lines if regex.search(line)]
+                        chunk = []
+                        total_chars = 0
+                        max_chars = 8000
+                        chunks = []
+                        for line in lines:
+                            if total_chars + len(line) > max_chars:
+                                chunks.append("\n".join(chunk))
+                                chunk = []
+                                total_chars = 0
+
+                            chunk.append(line)
+                            total_chars += len(line)
+
+                        if chunk:
+                            chunks.append("\n".join(chunk))
+                        pdf = FPDF()
+                        pdf.add_page()
+                        pdf.set_auto_page_break(auto=True, margin=15)
+                        pdf.set_font("Arial", size=12)
+
+                        for i, chunk in enumerate(chunks, 1):
+                            prompt = f"""
+                    You are a senior STB QA engineer. Analyze the following log lines and summarize:
+                    1. Any known issues (e.g., 404 means 'page not found', 'No signal' → HDMI issue).
+                    2. Group errors by type and give root causes if possible.
+                    3. Review the following logs and identify:
+                    - Any errors (e.g., HTTP 404, HDMI issues, authentication failures)
+                    - The cause (if identifiable)
+                    - Suggested fix or root cause in plain language
+
+                    Respond in this format:
+                    Error: [Short error]
+                    Cause: [Why it happened]
+                    Fix: [Suggested fix or next step]
+                    Log Chunk #{i}:
+                    {chunk}
+                    """
+                            vertexai.init(project="uk-labs-hackathon-1-0625-dev", location="europe-west1")
+                            model = GenerativeModel("gemini-2.0-flash-001")
+                            response = model.generate_content(prompt)
+                            output_text = response.text
+                            st.success("✅ Log file Analyzed successfully")
+                            pdf_data = text_to_pdf(output_text)
+                            st.download_button(
+                                label="📄 Download Log file as PDF",
+                                data=pdf_data,
+                                file_name="Log_file_analysis.pdf",
+                                mime="application/pdf"
+                            )
+                            st.text_area("📋 Detected Issues", output_text, height=500)
 
 # st.divider()
 # Custom CSS for buttons, arrows, and sticky footer
