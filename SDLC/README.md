@@ -1,11 +1,11 @@
 # How to run it
 Run the following commands:
 
-    poetry install
+   poetry install
 
-    docker run -p 8080:8080 -p 50051:50051 -d semitechnologies/weaviate:1.27.5
-
-    poetry run streamlit run llamaindex_rag/app.py
+   docker run -p 8080:8080 -p 50051:50051 -d semitechnologies/weaviate:1.27.5
+   Navigate to SDLC directory
+   poetry run streamlit run app.py
 
 # Configure your Python Interpreter 
 
