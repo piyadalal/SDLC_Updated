@@ -1,0 +1,22 @@
+Please enter the work type you want to create? (Eg., Bug, Task, Epic, Story, Feature,
+Request)
+2. What is the priority of the defect? (We can set Medium as default)
+3. What is the severity of the defect? (We can set Minor as default)
+4. What is the baseline version in which the defect is detected? (Eg., v1.1)
+5. What is the summary of the defect? (give a one line description of the defect)
+6. Please give the detailed description of the defect (with Steps to reproduce, Expected
+behavior and actual behavior)
+7. Please give the platform details in which the defect is seen (Eg., Amidala Cable DE,
+Amidala Satellite DE)
+8. Can you please provide the intermittent details of the defect observed? (E.g., Highly
+intermittent - rarely reproducible, Intermittent - 50% reproducible, Not Intermittent -
+100% reproducible)
+9. What kind of impact will the customer have because of this defect?
+10. Do you have any logs captured for this defect? If yes, can you please upload?
+11. Do you also have any video or picture that supports the understanding of the defect?
+12. Is this a regression? (i.e., For any *test* that has previously passed, and now fails.)
+13. Is this a new functionality?
+14. Do you want to add a label to the defect? (Eg., "Regression", "New_Test-
+New_Functionality" – The first time a test has run for a new area,
+"DE TestAmberIssue" - if new functionality )
+15. Do you want to add any component to the defect? (Eg., Defect_scrub etc)
