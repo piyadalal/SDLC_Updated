@@ -1,0 +1,48 @@
+OPEN AI FINE TUNING
+openai api files.create -p fine-tune -f ac_testcases.jsonl
+openai api files.create -f ac_testcases.jsonl -p fine-tune
+ - get file id
+openai api fine_tuning.jobs.create -t file-abc123xyz456 -m gpt-3.5-turbo
+openai api fine_tuning.jobs.list
+
+ft:gpt-3.5-turbo:your-org:custom:testcase-gen
+
+
+
+
+
+✅ What You Can Do on Azure Instead
+1. Use Prompt Engineering
+Craft structured prompts like:
+
+“Generate test cases from this acceptance criteria: AC - User should receive a password reset email.”
+
+2. Build a RAG System (Retrieval-Augmented Generation)
+Instead of fine-tuning:
+
+Store AC ↔ test case pairs in a vector database (e.g., Azure Cognitive Search or Pinecone)
+
+Embed them using text-embedding-ada-002
+
+Use similarity search + GPT to generate or retrieve test cases
+
+3. Use Azure Machine Learning (Custom Models)
+If you truly need fine-tuning:
+
+Train your own small language model (like BERT or T5) using Azure ML or Hugging Face Transformers
+
+Deploy it via Azure ML endpoints
+
+
+
+{"messages":[{"role":"system","content":"You are a test case generator."},{"role":"user","content":"AC: User logs in with valid credentials."},{"role":"assistant","content":"Test Case: 1. Go to login page...\nExpected: User lands on dashboard"}]}
+
+
+{
+  "instruction": "Generate a manual E2E test case from the following STB requirement.",
+  "input": "When the user presses the Guide button on the remote, the TV should open the program guide.",
+  "output": "Test Case:\n1. Ensure STB is powered on.\n2. Press the 'Guide' button on the remote.\n3. Verify that the program guide screen is displayed.\n4. Confirm that guide data is loaded correctly.\n5. Return to the home screen."
+}
+prompt = "Requirement: When the user pauses live TV, a play icon should appear.\n\nGenerate a manual E2E test case."
+
+output = model.generate(prompt)  # or use Transformers pipeline

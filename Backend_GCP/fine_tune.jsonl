@@ -1,0 +1,4 @@
+{"messages":[{"role":"system","content":"You are a test case generator."},{"role":"user","content":"AC: User logs in with valid credentials."},{"role":"assistant","content":"Test Case: 1. Go to login page...\nExpected: User lands on dashboard"}]}
+
+
+
