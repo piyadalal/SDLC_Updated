@@ -7,19 +7,12 @@ modules:
         function: resolver
       title: ai-pm-v2
       description: A simple Forge UI Kit app to generate epics and user stories
-      config:
-        resource: macro-config
-        viewportSize: max
-        render: native
-        title: Config
   function:
     - key: resolver
       handler: index.handler
 resources:
   - key: main
     path: src/frontend/index.jsx
-  - key: macro-config
-    path: src/frontend/config.jsx
 permissions:
   scopes:
     - read:confluence-content.summary

@@ -39,7 +39,10 @@ const App = () => {
       <Text>
         Click to generate a structured breakdown of this page’s requirements.
       </Text>
-      <Button text="Generate Breakdown" onClick={handleClick} />
+      <Button appearance="primary" onClick={handleClick}>
+        Generate Breakdown
+      </Button>
+
       {status === "loading" && <Text>Generating breakdown…</Text>}
       {status === "success" && <Text>✅ New page created with table.</Text>}
       {status === "error" && <Text>❌ Failed to create breakdown.</Text>}
