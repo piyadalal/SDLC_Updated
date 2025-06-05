@@ -107,12 +107,16 @@ for i, step in enumerate(steps):
 
 section = st.session_state["current_step"]
 
-def text_to_pdf(text: str) -> bytes:
+def text_to_pdf(text: str, title: str = None) -> bytes:
     pdf = FPDF()
     pdf.add_page()
     pdf.set_auto_page_break(auto=True, margin=15)
     pdf.set_font("Arial", size=11)
-    # Use multi_cell to auto-wrap text and create line breaks
+    if title:
+        pdf.set_font("Arial", style="B", size=14)
+        pdf.cell(0, 10, title, ln=True, align="C")
+        pdf.ln(5)
+        pdf.set_font("Arial", size=11)
     lines = text.strip().split('\n')
     for line in lines:
         pdf.multi_cell(0, 10, line)
@@ -120,14 +124,16 @@ def text_to_pdf(text: str) -> bytes:
 
 if section == "Business Requirements":
     st.header("1️⃣ Upload Business Requirements")
-    with st.container():
+    col1, col2 = st.columns(2)
+
+    with col1:
         st.markdown("**Paste your business requirements below or upload a file:**")
         if "requirements_input" not in st.session_state:
             st.session_state["requirements_input"] = ""
         requirements = st.text_area(
             "",
             value=st.session_state["requirements_input"],
-            height=300,
+            height=200,
             key="requirements_input"
         )
         uploaded_file = st.file_uploader(
@@ -147,78 +153,76 @@ if section == "Business Requirements":
             else:
                 st.error("Unsupported file type.")
                 full_text = ""
-        st.text_area(
-            "📄 Preview of uploaded file content (read-only):",
-            value=full_text,
-            height=200,
-            disabled=True
-        )
-        col1, col2 = st.columns(2)
-        with col1:
+            st.session_state["requirements_input"] = full_text
+            requirements = full_text
+
+        col_gemini, col_gpt = st.columns(2)
+
+        with col_gemini:
             if st.button("🧠 Generate User Stories using Gemini"):
-                with st.spinner("Generating user stories using Gemini"):
-                    vertexai.init(project="uk-labs-hackathon-1-0625-dev", location="europe-west1")
-                    model = GenerativeModel("gemini-2.0-flash-001")
-                    acceptance_criteria = """
-As a User of a STB, I want to be able to Add and Remove Items to my WatchList from any ShowPage
-"""
-                    prompt = f"""
+                if requirements.strip():
+                    with st.spinner("Generating user stories using Gemini"):
+                        vertexai.init(project="uk-labs-hackathon-1-0625-dev", location="europe-west1")
+                        model = GenerativeModel("gemini-2.0-flash-001")
+                        prompt = f"""
 You are a senior QA engineer and business analyst working on the WatchList
 functionality for a Sky DE STB product. Based on the provided product requirements, generate:
 1. One or more **User Stories** (formatted with territory/platform, user role, and business goal). 
 Here is how the requirements looks like :
-{full_text}
+{requirements}
 """
-                    response = model.generate_content(prompt)
-                    output_text = response.text
-                    st.success("✅ User Stories generated successfully:")
-                    pdf_data = text_to_pdf(output_text)
-                    st.download_button(
-                        label="📄 Download User Story as PDF",
-                        data=pdf_data,
-                        file_name="gemini_User_story.pdf",
-                        mime="application/pdf"
-                    )
-                    st.text_area("📋 Generated User Stories", output_text, height=500)
-        with col2:
+                        response = model.generate_content(prompt)
+                        st.session_state["user_stories_result"] = response.text
+                else:
+                    st.warning("Please paste requirements or upload a file.")
+
+        with col_gpt:
             if st.button("🔄 Generate User Stories using GPT"):
-                if full_text.strip():
+                if requirements.strip():
                     with st.spinner("Generating user stories using GPT..."):
                         prompt_gpt = (
                             "Given the following business requirements, generate user stories in the format:\n"
                             "- As a <user>, I want to <goal> so that <reason>.\n\n"
-                            f"Business Requirements:\n{full_text}\n\nUser Stories:"
+                            f"Business Requirements:\n{requirements}\n\nUser Stories:"
                         )
                         response = llm.complete(prompt_gpt)
-                        output_text_gpt = response
-                        st.success("✅ User Stories generated successfully (GPT):")
-                        st.text_area("📋 Generated User Stories (GPT)", output_text_gpt, height=500)
-                        # Convert generated text to PDF bytes
-                        pdf_data_gpt = text_to_pdf(output_text_gpt)
-                        # Download button for GPT-generated PDF
-                        st.download_button(
-                            label="📄 Download User Story as PDF (GPT)",
-                            data=pdf_data_gpt,
-                            file_name="gpt_User_story.pdf",
-                            mime="application/pdf"
-                        )
+                        st.session_state["user_stories_result"] = response
                 else:
                     st.warning("Please paste requirements or upload a file.")
 
-elif section == "User Story":
+    with col2:
+        st.markdown("**Generated User Stories:**")
+        user_stories_text = st.session_state.get("user_stories_result", "")
+        st.text_area(
+            "",
+            value=user_stories_text,
+            height=318,
+            key="user_stories_result_display"
+        )
+        pdf_bytes = text_to_pdf(user_stories_text or "", title="Generated User Stories")
+        st.download_button(
+            label="⬇️ Download as PDF",
+            data=pdf_bytes,
+            file_name="generated_user_stories.pdf",
+            mime="application/pdf"
+        )
+
+elif section in ["User Story", "User Stories"]:
     st.header("2️⃣ Upload User Stories")
-    with st.container():
+    col1, col2 = st.columns(2)
+
+    with col1:
         st.markdown("**Paste your user stories below or upload a file:**")
-        # Text area for manual input (independent from file upload)
-        user_input_text = st.text_area(
-            label="",
-            placeholder="Type or paste user stories here...",
+        if "user_stories_input" not in st.session_state:
+            st.session_state["user_stories_input"] = ""
+        user_stories = st.text_area(
+            "",
+            value=st.session_state["user_stories_input"],
             height=200,
             key="user_stories_input"
         )
-        # File uploader input (stored separately)
         us_file = st.file_uploader(
-            "Or upload a file (TXT or PDF)",
+            "Drag and drop file here\nLimit 200MB per file • TXT or PDF",
             type=["txt", "pdf"],
             label_visibility="collapsed"
         )
@@ -226,7 +230,6 @@ elif section == "User Story":
         if us_file:
             file_ext = us_file.name.split(".")[-1].lower()
             if file_ext == "pdf":
-                import fitz  # PyMuPDF
                 doc = fitz.open(stream=us_file.read(), filetype="pdf")
                 for page in doc:
                     uploaded_text += page.get_text()
@@ -234,158 +237,138 @@ elif section == "User Story":
                 uploaded_text = us_file.read().decode("utf-8")
             else:
                 st.error("Unsupported file type.")
-        st.text_area(
-            "📄 Preview of uploaded file content (read-only):",
-            value=uploaded_text,
-            height=200,
-            disabled=True
-        )
-        # Final text source logic: Prefer manual input if not empty
-        final_user_stories = user_input_text.strip() or uploaded_text.strip()
-        col1, col2 = st.columns(2)
-        with col1:
+                uploaded_text = ""
+            st.session_state["user_stories_input"] = uploaded_text
+            user_stories = uploaded_text
+
+        col_gemini, col_gpt, col_tc = st.columns(3)
+
+        with col_gemini:
             if st.button("🧠 Generate Acceptance Criteria using Gemini"):
-                with st.spinner("Generating Acceptance Criteria using Gemini..."):
-                    # Dynamically pick the final source
-                    user_stories_source = user_input_text.strip() or uploaded_text.strip()
-                    if not user_stories_source:
-                        st.warning("Please provide user stories via text area or file upload.")
-                    else:
+                if user_stories.strip():
+                    with st.spinner("Generating Acceptance Criteria using Gemini..."):
                         vertexai.init(project="uk-labs-hackathon-1-0625-dev", location="europe-west1")
                         model = GenerativeModel("gemini-2.0-flash-001")
                         prompt = f"""
 You are a senior QA engineer and business analyst working on the WatchList functionality for a
 Sky DE STB product. Based on the provided user stories, generate:
-1. For each User Story, provide **detailed Acceptance Criteria** strictly in the 
+1. For each User Story, provide **detailed Acceptance Criteria** strictly in the
 "Given / When / Then" format, with no AND statements.
 Here are the user stories:
-{user_stories_source}
+{user_stories}
 """
                         response = model.generate_content(prompt)
-                        output_text = response.text
-                        st.success("✅ Acceptance Criteria generated successfully:")
-                        pdf_data = text_to_pdf(output_text)
-                        st.download_button(
-                            label="📄 Download Acceptance Criteria as PDF",
-                            data=pdf_data,
-                            file_name="gemini_Acceptance_Criteria.pdf",
-                            mime="application/pdf"
-                        )
-                        st.text_area("📋 Generated Acceptance Criteria", output_text, height=500)
-        with col2:
-            if st.button("🔄 Generate Acceptance Criteria using GPT"):
-                # Choose from user input text area or uploaded text
-                input_text = user_input_text.strip() or uploaded_text.strip()
-                if input_text:
-                    with st.spinner("Generating acceptance criteria using GPT..."):
-                        prompt_gpt = (
-                            "Given the following business requirements, generate user stories in the format:\n"
-                            "- As a <user>, I want to <goal> so that <reason>.\n\n"
-                            f"Business Requirements:\n{input_text}\n\nUser Stories:"
-                        )
-                        response = llm.complete(prompt_gpt)
-                        output_text_gpt = response
-                        st.success("✅ Acceptance criteria generated successfully (GPT):")
-                        st.text_area("📋 Generated Acceptance Criteria (GPT)", output_text_gpt, height=500)
-                        # Convert generated text to PDF bytes
-                        pdf_data_gpt = text_to_pdf(output_text_gpt.text)
-                        # Download button for GPT-generated PDF
-                        st.download_button(
-                            label="📄 Download Acceptance Criteria as PDF (GPT)",
-                            data=pdf_data_gpt,
-                            file_name="gpt_acceptance_criteria.pdf",
-                            mime="application/pdf"
-                        )
+                        st.session_state["acceptance_criteria_result"] = response.text
                 else:
                     st.warning("Please paste user stories or upload a file.")
 
+        with col_gpt:
+            if st.button("🔄 Generate Acceptance Criteria using GPT"):
+                if user_stories.strip():
+                    with st.spinner("Generating acceptance criteria using GPT..."):
+                        prompt_gpt = (
+                            "Given the following user stories, generate acceptance criteria in the format:\n"
+                            "Given <context>, When <action>, Then <outcome>.\n\n"
+                            f"User Stories:\n{user_stories}\n\nAcceptance Criteria:"
+                        )
+                        response = llm.complete(prompt_gpt)
+                        st.session_state["acceptance_criteria_result"] = response
+                else:
+                    st.warning("Please paste user stories or upload a file.")
+
+        with col_tc:
+            if st.button("🧪 Generate Test Cases", key="gen_test_cases"):
+                if user_stories.strip():
+                    with st.spinner("Generating test cases..."):
+                        prompt = (
+                            "Given the following user stories, generate test cases in the format:\n"
+                            "- Positive: ...\n- Negative: ...\n- Boundary: ...\n\n"
+                            f"User Stories:\n{user_stories}\n\nTest Cases:"
+                        )
+                        response = llm.complete(prompt)
+                        st.session_state["test_cases_result"] = response
+                else:
+                    st.warning("Please paste user stories or upload a file.")
+
+    with col2:
+        st.markdown("**Generated Acceptance Criteria:**")
+        ac_text = st.session_state.get("acceptance_criteria_result", "")
+        st.text_area(
+            "",
+            value=ac_text,
+            height=150,
+            key="acceptance_criteria_result_display"
+        )
+        pdf_bytes_ac = text_to_pdf(ac_text or "", title="Generated Acceptance Criteria")
+        st.download_button(
+            label="⬇️ Download Acceptance Criteria as PDF",
+            data=pdf_bytes_ac,
+            file_name="generated_acceptance_criteria.pdf",
+            mime="application/pdf"
+        )
+
+        st.markdown("**Generated Test Cases:**")
+        test_cases_text = st.session_state.get("test_cases_result", "")
+        st.text_area(
+            "",
+            value=test_cases_text,
+            height=150,
+            key="test_cases_result_display"
+        )
+        pdf_bytes_tc = text_to_pdf(test_cases_text or "", title="Generated Test Cases")
+        st.download_button(
+            label="⬇️ Download Test Cases as PDF",
+            data=pdf_bytes_tc,
+            file_name="generated_test_cases.pdf",
+            mime="application/pdf"
+        )
+
 elif section == "Test Case Generation":
     st.header("3️⃣ Test Case Generation")
-    with st.container():
+    col1, col2 = st.columns(2)
+
+    with col1:
         st.markdown("**Paste your user stories or acceptance criteria below or upload a file:**")
-        # Text area for manual input (independent from file upload)
-        user_input_text = st.text_area(
-            label="",
-            placeholder="Type or paste user stories or acceptance criteria here...",
+        if "test_case_user_stories_input" not in st.session_state:
+            st.session_state["test_case_user_stories_input"] = ""
+        user_stories = st.text_area(
+            "",
+            value=st.session_state["test_case_user_stories_input"],
             height=200,
             key="test_case_user_stories_input"
         )
-        # File uploader input (stored separately)
-        us_file = st.file_uploader(
-            "Or upload a file (TXT or PDF)",
+        tc_file = st.file_uploader(
+            "Drag and drop file here\nLimit 200MB per file • TXT or PDF",
             type=["txt", "pdf"],
             label_visibility="collapsed"
         )
         uploaded_text = ""
-        if us_file:
-            file_ext = us_file.name.split(".")[-1].lower()
+        if tc_file:
+            file_ext = tc_file.name.split(".")[-1].lower()
             if file_ext == "pdf":
-                import fitz  # PyMuPDF
-                doc = fitz.open(stream=us_file.read(), filetype="pdf")
+                doc = fitz.open(stream=tc_file.read(), filetype="pdf")
                 for page in doc:
                     uploaded_text += page.get_text()
             elif file_ext == "txt":
-                uploaded_text = us_file.read().decode("utf-8")
+                uploaded_text = tc_file.read().decode("utf-8")
             else:
                 st.error("Unsupported file type.")
-        st.text_area(
-            "📄 Preview of uploaded file content (read-only):",
-            value=uploaded_text,
-            height=200,
-            disabled=True
-        )
-        # Final text source logic: Prefer manual input if not empty
-        final_user_stories = user_input_text.strip() or uploaded_text.strip()
-        col1, col2 = st.columns(2)
-        with col1:
+                uploaded_text = ""
+            st.session_state["test_case_user_stories_input"] = uploaded_text
+            user_stories = uploaded_text
+
+        col_gemini, col_gpt = st.columns(2)
+
+        with col_gemini:
             if st.button("🧠 Generate Testcases using Gemini"):
-                with st.spinner("Generating Testcases using Gemini..."):
-                    # Dynamically pick the final source
-                    user_stories_source = user_input_text.strip() or uploaded_text.strip()
-                    if not user_stories_source:
-                        st.warning("Please provide user stories or acceptance criteria via text area or file upload.")
-                    else:
+                if user_stories.strip():
+                    with st.spinner("Generating Testcases using Gemini..."):
                         vertexai.init(project="uk-labs-hackathon-1-0625-dev", location="europe-west1")
                         model = GenerativeModel("gemini-2.0-flash-001")
                         prompt = f"""
 You are a senior QA engineer and business analyst working on the WatchList functionality for a
-Sky DE STB product. Based on the provided user stories in the format:\n"
-"- As a <user>, I want to <goal> so that <reason>.\n\n"
-or acceptance criteria in the format "Given / When / Then", generate:... 1. For each User Story or acceptance criteria, generate one or more **E2E test cases** in this format:
-Test Case: [Clear and descriptive title]
-| Test Step | Action | Expected Result |
-|-----------|------------------------------------------------------------------------|------------------------------------------------------|
-| Step 1 | [Describe the user action clearly] | [Describe what the system should do or show] |
-| Step 2 | [Next step, continuing the user flow] | [Next expected outcome] |
-| ... | ... | ... |
-
-2. Match the level of detail and formal tone used in the user story or acceptance criteria documentation below.
-{user_stories_source}
-"""
-                        response = model.generate_content(prompt)
-                        output_text = response.text
-                        st.success("✅ Testcases generated successfully:")
-                        pdf_data = text_to_pdf(output_text)
-                        st.download_button(
-                            label="📄 Download Testcases as PDF",
-                            data=pdf_data,
-                            file_name="gemini_Testcases.pdf",
-                            mime="application/pdf"
-                        )
-                        st.text_area("📋 Generated Testcases", output_text, height=500)
-        with col2:
-            if st.button("🔄 Generate Testcases using GPT"):
-                # Choose from user input text area or uploaded text
-                user_story_source = user_input_text.strip() or uploaded_text.strip()
-                if not user_story_source:
-                    st.warning("Please provide user stories or acceptance criteria via text area or file upload.")
-                else:
-                    with st.spinner("Generating Testcases using GPT..."):
-                        prompt_gpt = (
-                            f"""
-You are a senior QA engineer and business analyst working on the WatchList functionality for a
-Sky DE STB product. Based on the provided user stories in the format:\n"
-"- As a <user>, I want to <goal> so that <reason>.\n\n"
+Sky DE STB product. Based on the provided user stories in the format:
+"- As a <user>, I want to <goal> so that <reason>."
 or acceptance criteria in the format "Given / When / Then", generate:
 1. For each User Story or acceptance criteria, generate one or more **E2E test cases** in this format:
 Test Case: [Clear and descriptive title]
@@ -396,23 +379,56 @@ Test Case: [Clear and descriptive title]
 | ... | ... | ... |
 
 2. Match the level of detail and formal tone used in the user story or acceptance criteria documentation below.
-{user_story_source}
+{user_stories}
+"""
+                        response = model.generate_content(prompt)
+                        st.session_state["test_cases_result_tc"] = response.text
+                else:
+                    st.warning("Please paste user stories or upload a file.")
+
+        with col_gpt:
+            if st.button("🔄 Generate Testcases using GPT"):
+                if user_stories.strip():
+                    with st.spinner("Generating Testcases using GPT..."):
+                        prompt_gpt = (
+                            f"""
+You are a senior QA engineer and business analyst working on the WatchList functionality for a
+Sky DE STB product. Based on the provided user stories in the format:
+"- As a <user>, I want to <goal> so that <reason>."
+or acceptance criteria in the format "Given / When / Then", generate:
+1. For each User Story or acceptance criteria, generate one or more **E2E test cases** in this format:
+Test Case: [Clear and descriptive title]
+| Test Step | Action | Expected Result |
+|-----------|------------------------------------------------------------------------|------------------------------------------------------|
+| Step 1 | [Describe the user action clearly] | [Describe what the system should do or show] |
+| Step 2 | [Next step, continuing the user flow] | [Next expected outcome] |
+| ... | ... | ... |
+
+2. Match the level of detail and formal tone used in the user story or acceptance criteria documentation below.
+{user_stories}
 """
                         )
                         response = llm.complete(prompt_gpt)
-                        output_text_gpt = response
-                        st.success("✅ Testcases generated successfully (GPT):")
-                        st.text_area("📋 Generated Testcases (GPT)", output_text_gpt, height=500)
-                        # Convert generated text to PDF bytes
-                        pdf_data_gpt = text_to_pdf(output_text_gpt.text)
-                        # Download button for GPT-generated PDF
-                        st.download_button(
-                            label="📄 Download Testcases as PDF (GPT)",
-                            data=pdf_data_gpt,
-                            file_name="gpt_Testcases.pdf",
-                            mime="application/pdf"
-                        )
-                        st.text_area("📋 Generated Testcases", output_text, height=500)
+                        st.session_state["test_cases_result_tc"] = response
+                else:
+                    st.warning("Please paste user stories or upload a file.")
+
+    with col2:
+        test_cases_text_tc = st.session_state.get("test_cases_result_tc", "")
+        st.markdown("**Generated Test Cases:**")
+        st.text_area(
+            "",
+            value=test_cases_text_tc,
+            height=318,
+            key="test_cases_result_tc_display"
+        )
+        pdf_bytes = text_to_pdf(test_cases_text_tc or "", title="Generated Test Cases")
+        st.download_button(
+            label="⬇️ Download as PDF",
+            data=pdf_bytes,
+            file_name="generated_test_cases.pdf",
+            mime="application/pdf"
+        )
 
 elif section == "Defect Handling":
     st.header("4️⃣ Defect Handling")
