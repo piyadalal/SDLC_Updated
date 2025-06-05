@@ -1,10 +1,17 @@
-import React, { useState, useEffect } from 'react';
-import ForgeReconciler, { useConfig, Button, Label, SectionMessage, Stack, Textfield } from '@forge/react';
-import { view } from '@forge/bridge';
+import React, { useState, useEffect } from "react";
+import ForgeReconciler, {
+  useConfig,
+  Button,
+  Label,
+  SectionMessage,
+  Stack,
+  Textfield,
+} from "@forge/react";
+import { view } from "@forge/bridge";
 
 const useSubmit = () => {
   const [error, setError] = useState();
-  const [message, setMessage] = useState('');
+  const [message, setMessage] = useState("");
 
   const submit = async (fields) => {
     const payload = { config: fields };
@@ -22,12 +29,12 @@ const useSubmit = () => {
   return {
     error,
     message,
-    submit
+    submit,
   };
 };
 
 const Config = () => {
-  const [value, setValue] = useState('');
+  const [value, setValue] = useState("");
   const { error, message, submit } = useSubmit();
   const config = useConfig();
 
@@ -38,15 +45,21 @@ const Config = () => {
   return (
     <Stack space="space.200">
       <Label labelFor="myField">Config field:</Label>
-      <Textfield id="myField" value={value} onChange={(e) => setValue(e.target.value)} />
+      <Textfield
+        id="myField"
+        value={value}
+        onChange={(e) => setValue(e.target.value)}
+      />
       <Button appearance="subtle" onClick={view.close}>
         Close
       </Button>
       <Button appearance="primary" onClick={() => submit({ myField: value })}>
         Submit
       </Button>
-      {typeof error !== 'undefined' && (
-        <SectionMessage appearance={error ? 'error' : 'success'}>{message}</SectionMessage>
+      {typeof error !== "undefined" && (
+        <SectionMessage appearance={error ? "error" : "success"}>
+          {message}
+        </SectionMessage>
       )}
     </Stack>
   );

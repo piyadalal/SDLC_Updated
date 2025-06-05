@@ -1,27 +1,50 @@
-import React, { useEffect, useState } from 'react';
-import ForgeReconciler, { useConfig, CodeBlock, Text } from '@forge/react';
-import { invoke } from '@forge/bridge';
+import React, { useState, useEffect } from "react";
+import ForgeReconciler, { Text, Button, useProductContext } from "@forge/react";
+import { invoke } from "@forge/bridge";
 
 const App = () => {
-  const [data, setData] = useState(null);
+  const [status, setStatus] = useState("idle");
+  const context = useProductContext();
 
-  const config = useConfig();
+  useEffect(() => {
+    const generate = async () => {
+      if (!context?.content?.id) return;
+      // const pageId = context.content.id;
+      const pageId = 66354;
+      console.log("Extracted pageId:", pageId);
+      await invoke("gpt-resolver", { pageId });
+    };
+    generate();
+  }, [context]);
 
-  useEffect(async () => {
-    invoke('getText', { example: 'my-invoke-variable' }).then(setData);
-  }, []);
+  const handleClick = async () => {
+    setStatus("loading");
+    console.log("Context:", context);
+
+    try {
+      // const pageId = context?.extension?.content?.id;
+      const pageId = 66354;
+      console.log("Extracted pageId:", pageId);
+
+      const result = await invoke("gpt-resolver", { pageId });
+      setStatus("success");
+    } catch (err) {
+      console.error("Error invoking resolver:", err);
+      setStatus("error");
+    }
+  };
 
   return (
     <>
-      <Text>{data ? data : 'Loading...'}</Text>
-      <Text>Macro configuration data:</Text>
-      <CodeBlock language="json" text={JSON.stringify(config, null, 2)} />
+      <Text>
+        Click to generate a structured breakdown of this page’s requirements.
+      </Text>
+      <Button text="Generate Breakdown" onClick={handleClick} />
+      {status === "loading" && <Text>Generating breakdown…</Text>}
+      {status === "success" && <Text>✅ New page created with table.</Text>}
+      {status === "error" && <Text>❌ Failed to create breakdown.</Text>}
     </>
   );
 };
 
-ForgeReconciler.render(
-  <React.StrictMode>
-    <App />
-  </React.StrictMode>
-);
+ForgeReconciler.render(<App />);
