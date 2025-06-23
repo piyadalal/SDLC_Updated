@@ -34,8 +34,25 @@ embed_model = AzureOpenAIEmbedding(
 Settings.llm = llm
 Settings.embed_model = embed_model
 
-response = llm.complete("Say hello from Azure OpenAI!")
-print("Model response:", response)
+
+questions = [
+    "Please enter the work type you want to create? (Eg., Bug, Task, Epic, Story, Feature, Request)",
+    "What is the priority of the defect? (We can set Medium as default)",
+    "What is the severity of the defect? (We can set Minor as default)",
+    "What is the baseline version in which the defect is detected? (Eg., v1.1)",
+    "What is the summary of the defect? (give a one line description of the defect)",
+    "Please give the detailed description of the defect (with Steps to reproduce, Expected behavior and actual behavior)",
+    "Please give the platform details in which the defect is seen (Eg., Amidala Cable DE, Amidala Satellite DE)",
+    "Can you please provide the intermittent details of the defect observed?",
+    "What kind of impact will the customer have because of this defect?",
+    "Do you have any logs captured for this defect? If yes, can you please upload?",
+    "Do you also have any video or picture that supports the understanding of the defect?",
+    "Is this a regression?",
+    "Is this a new functionality?",
+    "Do you want to add a label to the defect?",
+    "Do you want to add any component to the defect?"
+]
+
 
 st.set_page_config(page_title="GenAI SDLC Automation", layout="wide")
 
@@ -201,7 +218,7 @@ Here is how the requirements looks like :
             height=318,
             key="user_stories_result_display"
         )
-        pdf_bytes = text_to_pdf(user_stories_text or "", title="Generated User Stories")
+        pdf_bytes = text_to_pdf(str(user_stories_text or ""), title="Generated User Stories")
         st.download_button(
             label="⬇️ Download as PDF",
             data=pdf_bytes,
@@ -301,7 +318,7 @@ Here are the user stories:
             height=150,
             key="acceptance_criteria_result_display"
         )
-        pdf_bytes_ac = text_to_pdf(ac_text or "", title="Generated Acceptance Criteria")
+        pdf_bytes_ac = text_to_pdf(str(ac_text or ""), title="Generated Acceptance Criteria")
         st.download_button(
             label="⬇️ Download Acceptance Criteria as PDF",
             data=pdf_bytes_ac,
@@ -317,7 +334,7 @@ Here are the user stories:
             height=150,
             key="test_cases_result_display"
         )
-        pdf_bytes_tc = text_to_pdf(test_cases_text or "", title="Generated Test Cases")
+        pdf_bytes_tc = text_to_pdf(str(test_cases_text or ""), title="Generated Test Cases")
         st.download_button(
             label="⬇️ Download Test Cases as PDF",
             data=pdf_bytes_tc,
@@ -424,7 +441,7 @@ Test Case: [Clear and descriptive title]
             height=318,
             key="test_cases_result_tc_display"
         )
-        pdf_bytes = text_to_pdf(test_cases_text_tc or "", title="Generated Test Cases")
+        pdf_bytes = text_to_pdf(str(test_cases_text_tc or ""), title="Generated Test Cases")
         st.download_button(
             label="⬇️ Download as PDF",
             data=pdf_bytes,
@@ -434,6 +451,87 @@ Test Case: [Clear and descriptive title]
 
 elif section == "Defect Handling":
     st.header("4️⃣ Defect Handling")
+    col1, col2 = st.columns(2)
+
+    # --- Left: Defect Template Form ---
+    with col1:
+        st.markdown("**🐞 Defect Template Form**")
+        if "defect_answers" not in st.session_state:
+            st.session_state["defect_answers"] = [""] * len(questions)
+
+        # Field-by-field input
+        st.session_state["defect_answers"][0] = st.selectbox(
+            questions[0], ["Bug", "Task", "Epic", "Story", "Feature", "Request"], key="work_type"
+        )
+        st.session_state["defect_answers"][1] = st.selectbox(
+            questions[1], ["Low", "Medium", "High"], index=1, key="priority"
+        )
+        st.session_state["defect_answers"][2] = st.selectbox(
+            questions[2], ["Minor", "Major", "Critical"], index=0, key="severity"
+        )
+        st.session_state["defect_answers"][3] = st.text_input(
+            questions[3], value=st.session_state["defect_answers"][3], key="baseline"
+        )
+        st.session_state["defect_answers"][4] = st.text_input(
+            questions[4], value=st.session_state["defect_answers"][4], key="summary"
+        )
+        st.session_state["defect_answers"][5] = st.text_area(
+            questions[5], value=st.session_state["defect_answers"][5], key="description"
+        )
+        st.session_state["defect_answers"][6] = st.text_input(
+            questions[6], value=st.session_state["defect_answers"][6], key="platform"
+        )
+        st.session_state["defect_answers"][7] = st.selectbox(
+            questions[7], [
+                "Highly intermittent - rarely reproducible",
+                "Intermittent - 50% reproducible",
+                "Not Intermittent - 100% reproducible"
+            ], key="intermittent"
+        )
+        st.session_state["defect_answers"][8] = st.text_area(
+            questions[8], value=st.session_state["defect_answers"][8], key="impact"
+        )
+        st.session_state["defect_answers"][9] = st.file_uploader(
+            questions[9], type=["txt", "log"], key="logs"
+        )
+        st.session_state["defect_answers"][10] = st.file_uploader(
+            questions[10], type=["mp4", "avi", "jpg", "png"], key="media"
+        )
+        st.session_state["defect_answers"][11] = st.radio(
+            questions[11], ["Yes", "No"], key="regression"
+        )
+        st.session_state["defect_answers"][12] = st.radio(
+            questions[12], ["Yes", "No"], key="new_func"
+        )
+        st.session_state["defect_answers"][13] = st.text_input(
+            questions[13], value=st.session_state["defect_answers"][13], key="label"
+        )
+        st.session_state["defect_answers"][14] = st.text_input(
+            questions[14], value=st.session_state["defect_answers"][14], key="component"
+        )
+
+        if st.button("Generate Defect Template"):
+            st.write("### Defect Template")
+            for q, a in zip(questions, st.session_state["defect_answers"]):
+                st.write(f"**{q}**\n{a}\n")
+
+    # --- Right: Defect Handling Chatbot ---
+    with col2:
+        st.markdown("**💬 Defect Handling Chatbot**")
+        if "defect_chat_history" not in st.session_state:
+            st.session_state["defect_chat_history"] = []
+
+        for entry in st.session_state["defect_chat_history"]:
+            st.markdown(f"**You:** {entry['user']}")
+            st.markdown(f"**Bot:** {entry['bot']}")
+
+        user_input = st.text_area("Ask a question about defect handling:", key="defect_chat_input")
+        if st.button("Send", key="defect_chat_send"):
+            if user_input.strip():
+                # Replace with your LLM or API call
+                bot_reply = f"Echo: {user_input}"  # Placeholder
+                st.session_state["defect_chat_history"].append({"user": user_input, "bot": bot_reply})
+                st.rerun()
 
 elif section == "Root Cause Analysis":
     st.header("4️⃣ Root Cause Analysis")
@@ -542,7 +640,7 @@ elif section == "Root Cause Analysis":
                             response = model.generate_content(prompt)
                             output_text = response.text
                             st.success("✅ Log file Analyzed successfully")
-                            pdf_data = text_to_pdf(output_text)
+                            pdf_data = text_to_pdf(str(output_text or ""))
                             st.download_button(
                                 label="📄 Download Log file as PDF",
                                 data=pdf_data,
