@@ -8,6 +8,7 @@ from fpdf import FPDF
 import fitz  # PyMuPDF
 from vertexai.preview.language_models import GenerativeModel
 import vertexai
+import subprocess
 
 # Load environment variables
 load_dotenv()
@@ -166,19 +167,23 @@ if section == "Business Requirements":
         with col1:
             if st.button("🧠 Generate User Stories using Gemini"):
                 with st.spinner("Generating user stories using Gemini"):
-                    vertexai.init(
-                        project="uk-labs-hackathon-1-0625-dev", location="europe-west1"
-                    )
-                    model = GenerativeModel("gemini-2.0-flash-001")
                     prompt = f"""
-You are a senior QA engineer and business analyst working on the nCRM side of the STB customer Database
-functionality for a Sky DE STB product. Based on the provided product requirements, generate:
-1. One or more **User Stories** (formatted with territory/platform, user role, and business goal).
-Here is how the requirements looks like :
-{full_text}
-"""
-                    response = model.generate_content(prompt)
-                    output_text = response.text
+                    You are a senior QA engineer and business analyst working on the nCRM side of the STB customer Database
+                    functionality for a Sky DE STB product. Based on the provided product requirements, generate:
+                    1. One or more **User Stories** (formatted with territory/platform, user role, and business goal).
+                    Here is how the requirements looks like :
+                    {full_text}
+                    """
+
+                    # Run Ollama with Mistral model
+                    result = subprocess.run(
+                        ['ollama', 'run', 'mistral'],
+                        input=prompt.encode(),
+                        stdout=subprocess.PIPE
+                    )
+
+                    output_text = result.stdout.decode()
+                    #print(output_text)
 
                     st.success("✅ User Stories generated successfully:")
                     pdf_data = text_to_pdf(output_text)
