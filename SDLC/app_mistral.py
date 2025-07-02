@@ -14,11 +14,8 @@ import requests
 import json
 from fpdf import FPDF
 import textwrap
-from reportlab.lib.pagesizes import A4
-from reportlab.pdfgen import canvas
-from io import BytesIO
-import textwrap
 
+import subprocess
 
 
 # Load environment variables
@@ -143,7 +140,10 @@ section = st.session_state["current_step"]
 
 
 
-
+from reportlab.lib.pagesizes import A4
+from reportlab.pdfgen import canvas
+from io import BytesIO
+import textwrap
 
 def text_to_pdf(text: str, title: str = None) -> bytes:
     buffer = BytesIO()
@@ -231,16 +231,11 @@ if section == "Business Requirements":
             if st.button("🧠 Generate User Stories using Gemini"):
                 if requirements.strip():
                     with st.spinner("Generating user stories using Gemini"):
-                        vertexai.init(project="uk-labs-hackathon-1-0625-dev", location="europe-west1")
-                        model = GenerativeModel("gemini-2.0-flash-001")
-                        prompt = f"""
-You are a senior QA engineer and business analyst working for a Sky DE STB product. Based on the provided product requirements, generate:
-1. One or more **User Stories** (formatted with territory/platform, user role, and business goal). 
-Here is how the requirements looks like :
-{requirements}
-"""
-                        response = model.generate_content(prompt)
-                        st.session_state["user_stories_result"] = response.text
+                        prompt = f"""You are a senior QA engineer and business analyst working on the STB for a Sky DE STB product. Based on the provided product requirements, generate:1. One or more **User Stories** in format As a User (formatted with territory/platform, user role, and business goal).Here is how the requirements looks like :{full_text}"""
+                        # Run Ollama with Mistral
+                        result = subprocess.run(['ollama', 'run', 'llama2'],input=prompt.encode(),stdout=subprocess.PIPE)
+                        output_text = result.stdout.decode()
+                        st.session_state["user_stories_result"] = output_text
                 else:
                     st.warning("Please paste requirements or upload a file.")
 
@@ -249,7 +244,8 @@ Here is how the requirements looks like :
                 if requirements.strip():
                     with st.spinner("Generating user stories using GPT..."):
                         prompt_gpt = f"""
-                        You are a senior QA engineer and business analyst working for a Sky DE STB product. Based on the provided product requirements, generate:
+                        You are a senior QA engineer and business analyst working on the WatchList
+                        functionality for a Sky DE STB product. Based on the provided product requirements, generate:
                         1. One or more **User Stories** (formatted with territory/platform, user role, and business goal). 
                         Here is how the requirements looks like :
                         {requirements}
@@ -329,7 +325,7 @@ elif section in ["User Story", "User Stories"]:
                         vertexai.init(project="uk-labs-hackathon-1-0625-dev", location="europe-west1")
                         model = GenerativeModel("gemini-2.0-flash-001")
                         prompt = f"""
-You are a senior QA engineer and business analyst working  for a
+You are a senior QA engineer and business analyst working on the WatchList functionality for a
 Sky DE STB product. Based on the provided user stories, generate:
 1. For each User Story, provide **detailed Acceptance Criteria** strictly in the
 "Given / When / Then" format, with no AND statements.
@@ -346,7 +342,7 @@ Here are the user stories:
                 if user_stories.strip():
                     with st.spinner("Generating acceptance criteria using GPT..."):
                         prompt_gpt = f"""
-                        You are a senior QA engineer and business analyst working  for a
+                        You are a senior QA engineer and business analyst working on the WatchList functionality for a
                         Sky DE STB product. Based on the provided user stories, generate:
                         1. For each User Story, provide **detailed Acceptance Criteria** strictly in the
                         "Given / When / Then" format, with no AND statements.
@@ -457,7 +453,7 @@ elif section == "Test Case Generation":
                         vertexai.init(project="uk-labs-hackathon-1-0625-dev", location="europe-west1")
                         model = GenerativeModel("gemini-2.0-flash-001")
                         prompt = f"""
-You are a senior QA engineer and business analyst working for a
+You are a senior QA engineer and business analyst working on the WatchList functionality for a
 Sky DE STB product. Based on the provided user stories in the format:
 "- As a <user>, I want to <goal> so that <reason>."
 or acceptance criteria in the format "Given / When / Then", generate:
@@ -482,7 +478,7 @@ Test Case: [Clear and descriptive title]
                 if user_stories.strip():
                     with st.spinner("Generating Testcases using GPT..."):
                         prompt_gpt = f"""
-                        You are a senior QA engineer and business analyst working for a
+                        You are a senior QA engineer and business analyst working on the WatchList functionality for a
                         Sky DE STB product. Based on the provided user stories in the format:
                         "- As a <user>, I want to <goal> so that <reason>."
                         or acceptance criteria in the format "Given / When / Then", generate:
