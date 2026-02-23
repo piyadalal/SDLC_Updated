@@ -1,2 +1,22 @@
 # MacOS metadata
 .DS_Store
+.idea
+.env
+*.env
+
+.venv_streamlit
+
+
+Backend_GCP/log_venv
+Backend_GCP/.env
+Backend_GCP/JIRA_API_KEYS.pdf
+
+ForgeApp/venv_labweek_2496
+ForgeApp/.env
+ForgeApp/.gitignore
+
+
+
+SDLC/.env
+
+TestCaseCreation/.env
